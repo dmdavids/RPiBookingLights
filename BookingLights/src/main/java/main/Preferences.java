@@ -38,7 +38,16 @@ public class Preferences {
 	private int testCycles = 3;  // number of times to cycle thru the light to prove they are up & running
 	private boolean ignoreGPIO = true;  // false = running on RPi true = running in test environment e.g. windows
 	
-
+	private boolean isOnSetHigh = true;  // ON means to set pin to high if true or to low if false
+	
+	// blink each light before turning solid
+	// indicates the number of times to blink 
+	// if 0 then no blinking will occur
+	private int blinkRed = 1;
+	private int blinkGreen = 1;
+	private int blinkYellow = 1;
+	private int blinkTime = 1000;  // time in milliseconds to sleep between blinks
+	
 	public boolean isIgnoreGPIO() {
 		return ignoreGPIO;
 	}
@@ -138,6 +147,37 @@ public class Preferences {
 		this.testCycles = testCycles;
 	}
 	
+	public boolean isOnSetHigh() {
+		return isOnSetHigh;
+	}
+	public void setOnSetHigh(boolean isOnSetHigh) {
+		this.isOnSetHigh = isOnSetHigh;
+	}
+	
+	public int getBlinkRed() {
+		return blinkRed;
+	}
+	public void setBlinkRed(int blinkRed) {
+		this.blinkRed = blinkRed;
+	}
+	public int getBlinkGreen() {
+		return blinkGreen;
+	}
+	public void setBlinkGreen(int blinkGreen) {
+		this.blinkGreen = blinkGreen;
+	}
+	public int getBlinkYellow() {
+		return blinkYellow;
+	}
+	public void setBlinkYellow(int blinkYellow) {
+		this.blinkYellow = blinkYellow;
+	}
+	public int getBlinkTime() {
+		return blinkTime;
+	}
+	public void setBlinkTime(int blinkTime) {
+		this.blinkTime = blinkTime;
+	}
 	@Override
 	public String toString() {
 		return "Preferences [roomId=" + roomId + ", apiURL=" + apiURL
@@ -148,7 +188,9 @@ public class Preferences {
 				+ ", hoursToCheck=" + hoursToCheck + ", greenPin=" + greenPin
 				+ ", yellowPin=" + yellowPin + ", redPin=" + redPin
 				+ ", testCycles=" + testCycles + ", ignoreGPIO=" + ignoreGPIO
-				+ "]";
+				+ ", isOnSetHigh=" + isOnSetHigh + ", blinkRed=" + blinkRed
+				+ ", blinkGreen=" + blinkGreen + ", blinkYellow=" + blinkYellow
+				+ ", blinkTime=" + blinkTime + "]";
 	}
 	
 }

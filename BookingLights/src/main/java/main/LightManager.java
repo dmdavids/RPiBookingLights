@@ -36,6 +36,9 @@ public class LightManager {
 	
 	// configuration used for the light manager
 	static private Preferences prefs;
+	// configuration for setting GPIO to high or low 
+	// when "on"
+	static boolean isOnHigh = true;
 
 	// true allows to test code on non-pi device
 	// set actual value via the preferences
@@ -47,8 +50,8 @@ public class LightManager {
 	static GpioPinDigitalOutput yellowPin;
 	static GpioPinDigitalOutput redPin;
 
-	// milliseconds so 1000 = 1 second, this is for the test cycle
-	// TODO: change the length if you want more or less time
+	
+	// milliseconds so 1000 = 1 second
 	static long testCycleSleepTime = (long) (1000 * 1.5); 
 
 
@@ -67,6 +70,10 @@ public class LightManager {
 			System.out
 					.println("Warning! GPIO pins are being ignored. "
 							+ "Modify preference file to activate.");
+		isOnHigh =  prefs.isOnSetHigh();
+		System.out.println("GPIO will set pins to " 
+		                   + (isOnHigh ? "high" : "low") 
+				           + " when turning them on.");
 		setupGPIOpins();
 		try {
 			testLights();
@@ -89,12 +96,19 @@ public class LightManager {
 					.provisionDigitalOutputPin(
 							getRaspiPin(prefs.getGreenPin()), "GREEN_LED",
 							PinState.LOW);
+			
 			yellowPin = gpio.provisionDigitalOutputPin(
 					getRaspiPin(prefs.getYellowPin()), "YELLOW_LED",
 					PinState.LOW);
+			
 			redPin = gpio.provisionDigitalOutputPin(
 					getRaspiPin(prefs.getRedPin()), "RED_LED", PinState.LOW);
+		} else {
+			greenPin = new TrafficLightDebugPin("GREEN pin (debug only NO RPi)");
+			redPin = new TrafficLightDebugPin("RED pin (debug only NO RPi)");
+			yellowPin = new TrafficLightDebugPin("YELLOW pin ((debug only NO RPi)");
 		}
+		
 	}
 
 	private static void testLights() throws InterruptedException {
@@ -105,11 +119,19 @@ public class LightManager {
 		for (int i = 0; i < prefs.getTestCycles(); i++) {
 			System.out.println("===> Light Test Cycle "
 					+ Integer.toString(i + 1));
-			turnOnGreenLight();
+			System.out.println("         >> ON/OFF Test");
+			turnOnLight(greenPin);
 			Thread.sleep(testCycleSleepTime);
-			turnOnYellowLight();
+			turnOnLight(yellowPin);
 			Thread.sleep(testCycleSleepTime);
-			turnOnRedLight();
+			turnOnLight(redPin);
+			Thread.sleep(testCycleSleepTime);
+			System.out.println("         >> Blinking Test");
+			blinkLight(greenPin, 3);
+			Thread.sleep(testCycleSleepTime);
+			blinkLight(redPin, 3);
+			Thread.sleep(testCycleSleepTime);
+			blinkLight(yellowPin, 3);
 			Thread.sleep(testCycleSleepTime);
 		}
 		turnOffAllLights();
@@ -117,49 +139,73 @@ public class LightManager {
 	}
 
 	public static void goodtoGo() {
-		turnOnGreenLight();
+		try {
+			blinkLight(greenPin, prefs.getBlinkGreen());
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		turnOnLight(greenPin);
 	}
 	
 	public static void firstWarning() {
-		turnOnYellowLight();
+		try {
+			blinkLight(yellowPin, prefs.getBlinkYellow());
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		turnOnLight(yellowPin);
 	}
+	
 	
 	public static void finalWarning() {
-		turnOnRedLight();
+		try {
+			blinkLight(redPin, prefs.getBlinkRed());
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		turnOnLight(redPin);
 	}
 	
+	public static void turnOnLight(GpioPinDigitalOutput pin){
+		System.out.println(pin.getName() + " is being Turned On.");
+		if (!ignoreGPIO) {
+			turnOffAllLights();
+			if(isOnHigh) 
+				pin.high();
+			else
+				pin.low();
+		}
+	}
 	
-	public static void turnOnGreenLight() {
-		System.out.println("GREEN light is on.");
-		if (!ignoreGPIO) {
+	public static void turnOffLight(GpioPinDigitalOutput pin){
+		System.out.println(pin.getName() + " is being Turned OFF.");
+		if(isOnHigh)
+			pin.low();
+		else
+			pin.high();
+	}
+	
+	public static void blinkLight(GpioPinDigitalOutput pin, int blinks) throws InterruptedException{
+		System.out.println(pin.getName() + " is blinking " + blinks 
+				           + " times every " + prefs.getBlinkTime() 
+				           + " milliseconds.");
+		turnOffAllLights();
+		for(int i = 0; i < blinks; i++) {
 			turnOffAllLights();
-			greenPin.high();
+			turnOnLight(pin);
+			Thread.sleep(prefs.getBlinkTime());
 		}
+		turnOffAllLights();
 	}
 
-	public static void turnOnRedLight() {
-		System.out.println("RED light is on.");
-		if (!ignoreGPIO) {
-			turnOffAllLights();
-			redPin.high();
-		}
-	}
-
-	public static void turnOnYellowLight() {
-		System.out.println("YELLOW light is on.");
-		if (!ignoreGPIO) {
-			turnOffAllLights();
-			yellowPin.high();
-		}
-	}
-
+	
 	public static void turnOffAllLights() {
 		if (!ignoreGPIO) {
-			greenPin.low();
-			redPin.low();
-			yellowPin.low();
-			System.out.println("ALL lights OFF.");
-		}
+			turnOffLight(greenPin);
+			turnOffLight(redPin);
+			turnOffLight(yellowPin);
+		} 
+		System.out.println("ALL lights OFF.");
 	}
 
 	private static Pin getRaspiPin(int value) {
