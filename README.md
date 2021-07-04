@@ -20,6 +20,9 @@
 <h4>Development Hardware</h4>
 <img src="/images/development%20hardware.png" width="400"/>
 <br>
+<h3>Software Overview</h3>
+<img src="/images/software.png" width="600"/>
+<br/>
 <h3>Completed and Working</h3>
 <img src="/images/working.jpg" width="400"/>
 <br>
